@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>whip_burgershot sounds</title></head>
+<body style="background: transparent; margin: 0;">
+<script>
+// The kitchen's sounds (client/effects.lua): one-offs, and loops by id whose volume Lua keeps updating.
+// Files are html/sounds/<file>; one that is missing simply plays nothing.
+const loops = {};
+
+function audio(file, volume, loop) {
+    const a = new Audio('sounds/' + file);
+    a.volume = Math.max(0, Math.min(1, volume || 0));
+    a.loop = !!loop;
+    a.onerror = () => {};
+    a.play().catch(() => {});
+    return a;
+}
+
+window.addEventListener('message', (e) => {
+    const m = e.data || {};
+    if (m.type === 'play') {
+        audio(m.file, m.volume, false);
+    } else if (m.type === 'loop') {
+        if (!loops[m.id]) loops[m.id] = audio(m.file, m.volume, true);
+    } else if (m.type === 'volume') {
+        const a = loops[m.id];
+        if (a) a.volume = Math.max(0, Math.min(1, m.volume || 0));
+    } else if (m.type === 'stop') {
+        const a = loops[m.id];
+        if (a) { a.pause(); a.src = ''; delete loops[m.id]; }
+    }
+});
+</script>
+</body>
+</html>
